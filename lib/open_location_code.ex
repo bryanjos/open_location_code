@@ -184,7 +184,7 @@ defmodule OpenLocationCode do
       |> String.replace(~r/#{@padding}+/, "")
       |> String.upcase()
 
-    code_length = Enum.min([String.length(code), @max_code_length])
+    code_length = min(String.length(code), @max_code_length)
 
     south_latitude = -90.0
     west_longitude = -180.0
@@ -192,11 +192,13 @@ defmodule OpenLocationCode do
     lat_resolution = 400
     lng_resolution = 400
 
-    {south_latitude, west_longitude, lat_resolution, lng_resolution, _digit} =
+    digit = 0
+
+    {south_latitude, west_longitude, lat_resolution, lng_resolution, digit} =
       do_decode(
         code,
         code_length,
-        0,
+        digit,
         lat_resolution,
         lng_resolution,
         south_latitude,
@@ -211,7 +213,7 @@ defmodule OpenLocationCode do
       west_longitude: west_longitude,
       latitude_height: lat_resolution,
       longitude_width: lng_resolution,
-      code_length: code_length,
+      code_length: digit,
       latitude_center: latitude_center,
       longitude_center: longitude_center
     }
@@ -252,7 +254,7 @@ defmodule OpenLocationCode do
 
     do_decode(
       code,
-      Enum.min([String.length(code), @max_code_length]),
+      min(String.length(code), @max_code_length),
       digit + 2,
       lat_resolution,
       lng_resolution,
@@ -281,7 +283,7 @@ defmodule OpenLocationCode do
 
     do_decode(
       code,
-      Enum.min([String.length(code), @max_code_length]),
+      min(String.length(code), @max_code_length),
       digit + 1,
       lat_resolution,
       lng_resolution,
@@ -327,27 +329,28 @@ defmodule OpenLocationCode do
     if full?(short_code) do
       String.upcase(short_code)
     else
-      ref_lat = clip_latitude(reference_latitude)
-      ref_lng = normalize_longitude(reference_longitude)
+      reference_latitude = clip_latitude(reference_latitude)
+      reference_longitude = normalize_longitude(reference_longitude)
 
       prefix_len = @separator_position - (:binary.match(short_code, @separator) |> elem(0))
 
-      code = prefix_by_reference(ref_lat, ref_lng, prefix_len) <> short_code
+      code =
+        prefix_by_reference(reference_latitude, reference_longitude, prefix_len) <> short_code
 
       code_area = decode!(code)
 
       resolution = precision_by_length(prefix_len)
 
-      half_res = resolution / 2
+      half_resolution = resolution / 2
 
       latitude = code_area.latitude_center
 
       latitude =
         cond do
-          ref_lat + half_res < latitude && latitude - resolution >= -90 ->
+          reference_latitude + half_resolution < latitude && latitude - resolution >= -90 ->
             latitude - resolution
 
-          ref_lat - half_res > latitude && latitude + resolution <= 90 ->
+          reference_latitude - half_resolution > latitude && latitude + resolution <= 90 ->
             latitude + resolution
 
           true ->
@@ -358,10 +361,10 @@ defmodule OpenLocationCode do
 
       longitude =
         cond do
-          ref_lng + half_res < longitude ->
+          reference_longitude + half_resolution < longitude ->
             longitude - resolution
 
-          ref_lng - half_res > longitude ->
+          reference_longitude - half_resolution > longitude ->
             longitude + resolution
 
           true ->
@@ -421,8 +424,8 @@ defmodule OpenLocationCode do
   end
 
   defp clip_latitude(latitude) do
-    max = Enum.max([-90.0, latitude])
-    Enum.min([90.0, max])
+    max = max(-90.0, latitude)
+    min(90.0, max)
   end
 
   defp normalize_longitude(longitude) when longitude <= 180 and longitude >= -180 do
