@@ -276,6 +276,7 @@ defmodule OpenLocationCode do
     lng_resolution = lng_resolution / 4
 
     row = Map.get(@decode, :binary.first(String.at(code, digit))) / 4
+    row = row |> floor()
     column = Map.get(@decode, :binary.first(String.at(code, digit))) |> Integer.mod(4)
 
     south_latitude = south_latitude + lat_resolution * row
