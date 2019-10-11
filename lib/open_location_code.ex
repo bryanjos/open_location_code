@@ -234,7 +234,7 @@ defmodule OpenLocationCode do
 
   defp do_decode(
          code,
-         _code_length,
+         code_length,
          digit,
          lat_resolution,
          lng_resolution,
@@ -254,7 +254,7 @@ defmodule OpenLocationCode do
 
     do_decode(
       code,
-      min(String.length(code), @max_code_length),
+      code_length,
       digit + 2,
       lat_resolution,
       lng_resolution,
@@ -265,7 +265,7 @@ defmodule OpenLocationCode do
 
   defp do_decode(
          code,
-         _code_length,
+         code_length,
          digit,
          lat_resolution,
          lng_resolution,
@@ -283,7 +283,7 @@ defmodule OpenLocationCode do
 
     do_decode(
       code,
-      min(String.length(code), @max_code_length),
+      code_length,
       digit + 1,
       lat_resolution,
       lng_resolution,
