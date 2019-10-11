@@ -234,7 +234,7 @@ defmodule OpenLocationCode do
 
   defp do_decode(
          code,
-         _code_length,
+         code_length,
          digit,
          lat_resolution,
          lng_resolution,
@@ -254,7 +254,7 @@ defmodule OpenLocationCode do
 
     do_decode(
       code,
-      min(String.length(code), @max_code_length),
+      code_length,
       digit + 2,
       lat_resolution,
       lng_resolution,
@@ -265,7 +265,7 @@ defmodule OpenLocationCode do
 
   defp do_decode(
          code,
-         _code_length,
+         code_length,
          digit,
          lat_resolution,
          lng_resolution,
@@ -275,7 +275,7 @@ defmodule OpenLocationCode do
     lat_resolution = lat_resolution / 5
     lng_resolution = lng_resolution / 4
 
-    row = Map.get(@decode, :binary.first(String.at(code, digit))) / 4
+    row = Map.get(@decode, :binary.first(String.at(code, digit))) |> div(4)
     column = Map.get(@decode, :binary.first(String.at(code, digit))) |> Integer.mod(4)
 
     south_latitude = south_latitude + lat_resolution * row
@@ -283,7 +283,7 @@ defmodule OpenLocationCode do
 
     do_decode(
       code,
-      min(String.length(code), @max_code_length),
+      code_length,
       digit + 1,
       lat_resolution,
       lng_resolution,
@@ -321,57 +321,58 @@ defmodule OpenLocationCode do
   reference location.
   """
   def recover_nearest(short_code, reference_latitude, reference_longitude) do
-    unless short?(short_code) do
-      raise ArgumentError,
-        message: "Open Location Code is not valid: #{short_code}"
-    end
+    cond do
+      full?(short_code) ->
+        String.upcase(short_code)
 
-    if full?(short_code) do
-      String.upcase(short_code)
-    else
-      reference_latitude = clip_latitude(reference_latitude)
-      reference_longitude = normalize_longitude(reference_longitude)
+      !short?(short_code) ->
+        raise ArgumentError,
+          message: "Open Location Code is not valid: #{short_code}"
 
-      prefix_len = @separator_position - (:binary.match(short_code, @separator) |> elem(0))
+      true ->
+        reference_latitude = clip_latitude(reference_latitude)
+        reference_longitude = normalize_longitude(reference_longitude)
 
-      code =
-        prefix_by_reference(reference_latitude, reference_longitude, prefix_len) <> short_code
+        prefix_len = @separator_position - (:binary.match(short_code, @separator) |> elem(0))
 
-      code_area = decode!(code)
+        code =
+          prefix_by_reference(reference_latitude, reference_longitude, prefix_len) <> short_code
 
-      resolution = precision_by_length(prefix_len)
+        code_area = decode!(code)
 
-      half_resolution = resolution / 2
+        resolution = precision_by_length(prefix_len)
 
-      latitude = code_area.latitude_center
+        half_resolution = resolution / 2
 
-      latitude =
-        cond do
-          reference_latitude + half_resolution < latitude && latitude - resolution >= -90 ->
-            latitude - resolution
+        latitude = code_area.latitude_center
 
-          reference_latitude - half_resolution > latitude && latitude + resolution <= 90 ->
-            latitude + resolution
+        latitude =
+          cond do
+            reference_latitude + half_resolution < latitude && latitude - resolution >= -90 ->
+              latitude - resolution
 
-          true ->
-            latitude
-        end
+            reference_latitude - half_resolution > latitude && latitude + resolution <= 90 ->
+              latitude + resolution
 
-      longitude = code_area.longitude_center
+            true ->
+              latitude
+          end
 
-      longitude =
-        cond do
-          reference_longitude + half_resolution < longitude ->
-            longitude - resolution
+        longitude = code_area.longitude_center
 
-          reference_longitude - half_resolution > longitude ->
-            longitude + resolution
+        longitude =
+          cond do
+            reference_longitude + half_resolution < longitude ->
+              longitude - resolution
 
-          true ->
-            longitude
-        end
+            reference_longitude - half_resolution > longitude ->
+              longitude + resolution
 
-      encode!(latitude, longitude, String.length(code) - String.length(@separator))
+            true ->
+              longitude
+          end
+
+        encode!(latitude, longitude, String.length(code) - String.length(@separator))
     end
   end
 
