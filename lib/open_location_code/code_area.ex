@@ -1,6 +1,6 @@
 defmodule OpenLocationCode.CodeArea do
   @moduledoc """
-  Contains coordinates of a decoded Open Location Code
+  Contains coordinates of a decoded Open Location Code.
   The coordinates include the latitude and longitude of the lower left and
   upper right corners and the center of the bounding box for the area the
   code represents.
