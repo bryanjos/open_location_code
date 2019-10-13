@@ -1,5 +1,7 @@
 # OpenLocationCode
 
+[![Build Status](https://travis-ci.com/bryanjos/open_location_code.svg?branch=master)](https://travis-ci.com/bryanjos/open_location_code)
+
 An implementation of Google's [Open Location Code](https://github.com/google/open-location-code) in Elixir
 
 ## Installation
