@@ -53,7 +53,6 @@ defmodule OpenLocationCode do
 
   @doc """
   Generates a Open Location Code from the given coordinates.
-  Assumes the Geo struct's coordinates represent
   latitude and longitude
 
   ## Examples

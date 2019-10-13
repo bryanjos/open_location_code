@@ -23,8 +23,7 @@ defmodule OpenLocationCode.MixProject do
     [
       {:stream_data, "~> 0.4.3", only: :test},
       {:ex_doc, "~> 0.21", only: :dev},
-      {:benchee, "~> 1.0", only: :dev},
-      {:geo, "~> 3.3"}
+      {:benchee, "~> 1.0", only: :dev}
     ]
   end
 end
